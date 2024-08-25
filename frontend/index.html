@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Roll Number</title>
+    <style>
+        /* Overall body styling */
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f5f7fa;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        /* Container styling */
+        .input-container, .output-container {
+            background-color: #ffffff;
+            padding: 20px;
+            margin: 10px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            width: 90%;
+            max-width: 600px;
+        }
+
+        /* Headings */
+        h1 {
+            color: #333;
+            font-size: 2em;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        h3 {
+            color: #444;
+            margin-bottom: 10px;
+        }
+
+        /* Button styling */
+        button {
+            background-color: #007bff;
+            color: #ffffff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Input and textarea styling */
+        textarea, select {
+            width: calc(100% - 22px);
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-top: 10px;
+            margin-bottom: 10px;
+            resize: vertical;
+        }
+
+        /* Error message styling */
+        .error {
+            color: red;
+            margin-top: 10px;
+            font-size: 14px;
+        }
+
+        /* Dropdown styling */
+        select {
+            height: 100px; /* Increased height */
+        }
+
+        /* Output container styling */
+        pre {
+            background-color: #e8e8e8;
+            padding: 15px;
+            border-radius: 5px;
+            font-size: 14px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* Responsive design for mobile */
+        @media (max-width: 600px) {
+            body {
+                padding: 10px;
+            }
+
+            .input-container, .output-container {
+                width: 100%;
+            }
+
+            button {
+                width: 100%;
+                padding: 12px;
+            }
+
+            textarea {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>Bajaj Finserv Health Challenge</h1>
+    <div class="input-container">
+        <label for="jsonInput">Enter JSON:</label><br>
+        <textarea id="jsonInput" rows="5" cols="50"></textarea><br>
+        <button id="submitBtn">Submit</button>
+        <p id="errorMessage" class="error"></p>
+    </div>
+    
+    <div id="dropdownContainer" class="input-container" style="display: none;">
+        <label for="responseFilter">Select response filter:</label><br>
+        <select id="responseFilter" multiple size="3"> <!-- Added size attribute -->
+            <option value="numbers">Numbers</option>
+            <option value="alphabets">Alphabets</option>
+            <option value="highest_lowercase_alphabet">Highest Lowercase Alphabet</option>
+        </select>
+    </div>
+    
+    <div id="outputContainer" class="output-container">
+        <h3>Response:</h3>
+        <pre id="responseOutput"></pre>
+    </div>
+
+    <script>
+        const submitBtn = document.getElementById('submitBtn');
+        const jsonInput = document.getElementById('jsonInput');
+        const responseOutput = document.getElementById('responseOutput');
+        const dropdownContainer = document.getElementById('dropdownContainer');
+        const responseFilter = document.getElementById('responseFilter');
+        const errorMessage = document.getElementById('errorMessage');
+
+        let responseData = null;
+
+        submitBtn.addEventListener('click', () => {
+            const jsonData = jsonInput.value.trim();
+            try {
+                const parsedData = JSON.parse(jsonData);
+                if (!Array.isArray(parsedData.data)) {
+                    throw new Error('Invalid JSON format');
+                }
+
+                errorMessage.textContent = '';
+                dropdownContainer.style.display = 'block';
+
+                fetch('/bfhl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: jsonData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    responseData = data;  // Store the response data for filtering
+                    responseOutput.textContent = JSON.stringify(data, null, 4);
+                })
+                .catch(error => {
+                    errorMessage.textContent = 'Error: ' + error.message;
+                });
+
+            } catch (error) {
+                errorMessage.textContent = 'Invalid JSON: ' + error.message;
+            }
+        });
+
+        responseFilter.addEventListener('change', () => {
+            if (!responseData) return;
+            const selectedOptions = Array.from(responseFilter.selectedOptions).map(option => option.value);
+            let filteredData = {};
+            selectedOptions.forEach(option => {
+                filteredData[option] = responseData[option];
+            });
+            responseOutput.textContent = JSON.stringify(filteredData, null, 4);
+        });
+    </script>
+</body>
+</html>
